@@ -354,3 +354,49 @@ async def main():
 if __name__ == "__main__":
     import asyncio
     asyncio.run(main())
+from telegram import ParseMode
+
+# Function to send a message with a mention (tag)
+async def send_mention_notification(chat_id, user_id, message, context):
+    user_mention = f"[{user_id}](tg://user?id={user_id})"  # Create a tag for the user
+    await context.bot.send_message(chat_id, message.format(user_mention), parse_mode=ParseMode.MARKDOWN_V2, disable_notification=True)
+
+async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not update.message or not update.message.text:
+        return
+
+    chat_id = str(update.effective_chat.id)
+    user = update.effective_user
+    text = az_lower(update.message.text.strip())
+
+    if not game_active.get(chat_id) or waiting_for_new_master.get(chat_id):
+        return
+
+    if user.id == game_master_id.get(chat_id):
+        return
+
+    if text == az_lower(current_word.get(chat_id, "")):
+        add_score(chat_id, user.id, user.first_name)
+        player_names[str(user.id)] = user.first_name
+        save_scores()
+
+        await update.message.reply_text("DƏFOL! SÖZ DOĞRUDUR!")
+
+        # Notify the game master after the word is found, with tag
+        await send_mention_notification(chat_id, game_master_id[chat_id], "🔔 YENİ SÖZ TAPILDI! APARICI {0}!", context)
+
+        attempts = 0
+        while attempts < 10:
+            nxt = random.choice(words)
+            if nxt not in used_words[chat_id]:
+                current_word[chat_id] = nxt
+                used_words[chat_id].append(nxt)
+                break
+            attempts += 1
+        else:
+            used_words[chat_id] = []
+            current_word[chat_id] = random.choice(words)
+            used_words[chat_id].append(current_word[chat_id])
+
+        update_activity(chat_id)
+        await update.message.reply_text("Yeni söz gəldi!", reply_markup=get_keyboard())
