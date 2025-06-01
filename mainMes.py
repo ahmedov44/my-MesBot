@@ -145,7 +145,7 @@ async def startgame(update: Update, context: ContextTypes.DEFAULT_TYPE):
     game_master_id[chat_id] = user.id
 
     # Aparıcıya bildiriş göndəririk
-   await send_mention_notification(chat_id, user.id, "🔔 Yeni aparıcı: {0}!", context)
+    await send_mention_notification(chat_id, user.id, "🔔 Yeni aparıcı: {0}!", context)
 
     while True:
         nxt = random.choice(words)
