@@ -5,17 +5,10 @@ import time
 import nest_asyncio
 import asyncio
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.constants import ParseMode  # 'ParseMode' buradan idxal olunur
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler,
     MessageHandler, ContextTypes, filters
 )
-
-# Aparıcıya bildiriş göndərmək üçün funksiyanı əlavə edirik
-async def send_mention_notification(chat_id, user_id, message, context):
-    user_mention = f"[{user_id}](tg://user?id={user_id})"  # Istifadəçiyə tag əlavə etmək
-    message = message.replace('!', r'\!')  # '!' simvolunu qaçırırıq
-    await context.bot.send_message(chat_id, message.format(user_mention), parse_mode=ParseMode.MARKDOWN_V2, disable_notification=True)
 
 nest_asyncio.apply()
 
@@ -68,36 +61,12 @@ def render_bar(score, max_score, length=10):
     filled_length = int(length * score / max_score) if max_score > 0 else 0
     return "▓" * filled_length + "░" * (length - filled_length)
 
-def get_medal(score):
-    if score >= 100:
-        return "🥇"  # Gold medal
-    elif score >= 50:
-        return "🥈"  # Silver medal
-    elif score >= 25:
-        return "🥉"  # Bronze medal
-    else:
-        return "🏅"  # Participation medal
-
 def add_score(chat_id: str, user_id: int, user_name: str, points: int = 1):
     if chat_id not in scoreboard:
         scoreboard[chat_id] = {}
     if user_id not in scoreboard[chat_id]:
         scoreboard[chat_id][user_id] = {"name": user_name, "score": 0}
-    
-    # Xalı artırırıq
     scoreboard[chat_id][user_id]["score"] += points
-
-    if user_id not in global_scoreboard:
-        global_scoreboard[user_id] = {"name": user_name, "score": 0}
-    global_scoreboard[user_id]["score"] += points
-
-    # Medal hesablama (xal əsasında)
-    medal = get_medal(scoreboard[chat_id][user_id]["score"])
-
-    # Bu, xalı artırıldıqdan sonra medalı qaytarır
-    print(f"User {user_name} has earned a {medal}!")
-    
-    return medal  # Medal qaytarırıq ki, onu istifadə edə bilək
 
     if user_id not in global_scoreboard:
         global_scoreboard[user_id] = {"name": user_name, "score": 0}
@@ -143,9 +112,6 @@ async def startgame(update: Update, context: ContextTypes.DEFAULT_TYPE):
     used_words.setdefault(chat_id, [])
     scoreboard.setdefault(chat_id, {})
     game_master_id[chat_id] = user.id
-
-    # Aparıcıya bildiriş göndəririk
-    await send_mention_notification(chat_id, user.id, "🔔 Yeni aparıcı: {0}!", context)
 
     while True:
         nxt = random.choice(words)
@@ -209,7 +175,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.answer("DƏFOL! APARICININ İŞİNƏ QARIŞMA.", show_alert=True)
         return
 
-    elif query.data == "skip":
+    if query.data == "skip":
         attempts = 0
         while attempts < 10:
             nxt = random.choice(words)
@@ -218,22 +184,25 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 used_words[chat_id].append(nxt)
                 break
             attempts += 1
-    else:
-        used_words[chat_id] = []
-        current_word[chat_id] = random.choice(words)
-        used_words[chat_id].append(current_word[chat_id])
+        else:
+            used_words[chat_id] = []
+            current_word[chat_id] = random.choice(words)
+            used_words[chat_id].append(current_word[chat_id])
 
-    # Yeni söz dəyişdirildikdə aparıcıya bildiriş göndəririk
-    await send_mention_notification(chat_id, game_master_id[chat_id], "🔔 Yeni mərhələ başladı! Söz: {0}!", context)
+        await query.answer(f"Yeni söz: {current_word[chat_id]}", show_alert=True)
 
-    await query.answer(f"Yeni söz: {current_word[chat_id]}", show_alert=True)
-    if query.message.text != "Yeni söz gəldi!":
+        if something:
     await query.edit_message_text("Yeni söz gəldi!", reply_markup=get_keyboard())
 else:
-    if query.message.reply_markup != get_keyboard():
+    try:
         await query.edit_message_reply_markup(reply_markup=get_keyboard())
+    except telegram.error.BadRequest as e:
+        if "Message is not modified" not in str(e):
+            raise
+        else:
+            await query.edit_message_reply_markup(reply_markup=get_keyboard())
 
-    if query.data == "change":
+    elif query.data == "change":
         waiting_for_new_master[chat_id] = True
         current_word[chat_id] = None
         game_master_id[chat_id] = None
@@ -290,27 +259,7 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         add_score(chat_id, user.id, user.first_name)
         player_names[str(user.id)] = user.first_name
         save_scores()
-
         await update.message.reply_text("DƏFOL! SÖZ DOĞRUDUR!")
-
-        # Yeni söz tapıldığında, aparıcıya bildiriş göndəririk
-        await send_mention_notification(chat_id, game_master_id[chat_id], "🔔 Yeni söz tapıldı! {0}!", context)
-
-        attempts = 0
-        while attempts < 10:
-            nxt = random.choice(words)
-            if nxt not in used_words[chat_id]:
-                current_word[chat_id] = nxt
-                used_words[chat_id].append(nxt)
-                break
-            attempts += 1
-        else:
-            used_words[chat_id] = []
-            current_word[chat_id] = random.choice(words)
-            used_words[chat_id].append(current_word[chat_id])
-
-        update_activity(chat_id)
-        await update.message.reply_text("Yeni söz gəldi!", reply_markup=get_keyboard())
 
         attempts = 0
         while attempts < 10:
@@ -412,63 +361,3 @@ async def main():
 if __name__ == "__main__":
     import asyncio
     asyncio.run(main())
-from telegram import ParseMode
-
-# Function to send a message with a mention (tag)
-async def send_mention_notification(chat_id, user_id, message, context):
-    user_mention = f"[{user_id}](tg://user?id={user_id})"  # Create a tag for the user
-    await context.bot.send_message(chat_id, message.format(user_mention), parse_mode=ParseMode.MARKDOWN_V2, disable_notification=True)
-
-async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not update.message or not update.message.text:
-        return
-
-    chat_id = str(update.effective_chat.id)
-    user = update.effective_user
-    text = az_lower(update.message.text.strip())
-
-    if not game_active.get(chat_id) or waiting_for_new_master.get(chat_id):
-        return
-
-    if user.id == game_master_id.get(chat_id):
-        return
-
-    if text == az_lower(current_word.get(chat_id, "")):
-        # Xal əlavə edir
-        medal = add_score(chat_id, user.id, user.first_name)
-
-        # İstifadəçiyə xal və medal bildiririk
-        await update.message.reply_text(f"🎉 {user.first_name} {medal} Xal: {scoreboard[chat_id][user.id]['score']}")
-
-        # Yeni söz tapıldı
-        attempts = 0
-        while attempts < 10:
-            nxt = random.choice(words)
-            if nxt not in used_words[chat_id]:
-                current_word[chat_id] = nxt
-                used_words[chat_id].append(nxt)
-                break
-            attempts += 1
-        else:
-            used_words[chat_id] = []
-            current_word[chat_id] = random.choice(words)
-            used_words[chat_id].append(current_word[chat_id])
-
-        update_activity(chat_id)
-        await update.message.reply_text("Yeni söz gəldi!", reply_markup=get_keyboard())
-
-        attempts = 0
-        while attempts < 10:
-            nxt = random.choice(words)
-            if nxt not in used_words[chat_id]:
-                current_word[chat_id] = nxt
-                used_words[chat_id].append(nxt)
-                break
-            attempts += 1
-        else:
-            used_words[chat_id] = []
-            current_word[chat_id] = random.choice(words)
-            used_words[chat_id].append(current_word[chat_id])
-
-        update_activity(chat_id)
-        await update.message.reply_text("Yeni söz gəldi!", reply_markup=get_keyboard())
