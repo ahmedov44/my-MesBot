@@ -192,7 +192,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.answer(f"Yeni söz: {current_word[chat_id]}", show_alert=True)
 
         if query.message.text != "Yeni söz gəldi!":
-            await query.edit_message_text("Yeni söz gəldi!", reply_markup=get_keyboard())
+    await query.edit_message_text("Yeni söz gəldi!", reply_markup=get_keyboard())
+else:
+    try:
+        await query.edit_message_reply_markup(reply_markup=get_keyboard())
+    except telegram.error.BadRequest as e:
+        if "Message is not modified" not in str(e):
+            raise
         else:
             await query.edit_message_reply_markup(reply_markup=get_keyboard())
 
