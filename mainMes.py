@@ -4,7 +4,8 @@ import random
 import time
 import nest_asyncio
 import asyncio
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, ParseMode  # ParseMode buraya əlavə olunur
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.constants import ParseMode  # 'ParseMode' buradan idxal olunur
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler,
     MessageHandler, ContextTypes, filters
