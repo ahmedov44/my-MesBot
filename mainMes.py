@@ -7,6 +7,7 @@ import nest_asyncio
 import asyncio
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
+    CallbackQueryHandler,
     Application, CommandHandler, ContextTypes
 )
 
