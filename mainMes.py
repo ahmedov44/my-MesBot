@@ -190,11 +190,26 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             used_words[chat_id].append(current_word[chat_id])
 
         await query.answer(f"Yeni söz: {current_word[chat_id]}", show_alert=True)
-        
-        if query.message.text != "Yeni söz gəldi!":
-            await query.edit_message_text("Yeni söz gəldi!", reply_markup=get_keyboard())
-        else:
-            await query.edit_message_reply_markup(reply_markup=get_keyboard())
+
+        new_text = "Yeni söz gəldi!"
+        new_markup = get_keyboard()
+        current_text = query.message.text
+        current_markup = query.message.reply_markup
+
+        import json
+        def markup_to_str(markup):
+            return json.dumps(markup.to_dict(), sort_keys=True) if markup else ""
+
+        try:
+            if current_text != new_text:
+                await query.edit_message_text(new_text, reply_markup=new_markup)
+            elif markup_to_str(current_markup) != markup_to_str(new_markup):
+                await query.edit_message_reply_markup(reply_markup=new_markup)
+        except BadRequest as e:
+            if "Message is not modified" in str(e):
+                pass
+            else:
+                raise
 
     elif query.data == "change":
         waiting_for_new_master[chat_id] = True
@@ -355,3 +370,4 @@ async def main():
 if __name__ == "__main__":
     import asyncio
     asyncio.run(main())
+
