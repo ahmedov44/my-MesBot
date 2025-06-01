@@ -196,6 +196,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 else:
     if query.message.reply_markup != get_keyboard():
         await query.edit_message_reply_markup(reply_markup=get_keyboard())
+
     except telegram.error.BadRequest as e:
         if "Message is not modified" not in str(e):
             raise
