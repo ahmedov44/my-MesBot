@@ -14,6 +14,7 @@ from telegram.ext import (
 # Aparıcıya bildiriş göndərmək üçün funksiyanı əlavə edirik
 async def send_mention_notification(chat_id, user_id, message, context):
     user_mention = f"[{user_id}](tg://user?id={user_id})"  # Istifadəçiyə tag əlavə etmək
+    message = message.replace('!', r'\!')  # '!' simvolunu qaçırırıq
     await context.bot.send_message(chat_id, message.format(user_mention), parse_mode=ParseMode.MARKDOWN_V2, disable_notification=True)
 
 nest_asyncio.apply()
@@ -120,7 +121,7 @@ async def startgame(update: Update, context: ContextTypes.DEFAULT_TYPE):
     game_master_id[chat_id] = user.id
 
     # Aparıcıya bildiriş göndəririk
-    await send_mention_notification(chat_id, user.id, "🔔 Yeni aparıcı: {0}!", context)
+   await send_mention_notification(chat_id, user.id, "🔔 Yeni aparıcı: {0}!", context)
 
     while True:
         nxt = random.choice(words)
