@@ -192,6 +192,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.answer(f"Yeni söz: {current_word[chat_id]}", show_alert=True)
         if query.message.text != "Yeni söz gəldi!":
         await query.edit_message_text("Yeni söz gəldi!", reply_markup=get_keyboard())
+        else:
         await query.edit_message_reply_markup(reply_markup=get_keyboard())
 
     elif query.data == "change":
