@@ -4,11 +4,16 @@ import random
 import time
 import nest_asyncio
 import asyncio
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, ParseMode  # ParseMode buraya əlavə olunur
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler,
     MessageHandler, ContextTypes, filters
 )
+
+# Aparıcıya bildiriş göndərmək üçün funksiyanı əlavə edirik
+async def send_mention_notification(chat_id, user_id, message, context):
+    user_mention = f"[{user_id}](tg://user?id={user_id})"  # Istifadəçiyə tag əlavə etmək
+    await context.bot.send_message(chat_id, message.format(user_mention), parse_mode=ParseMode.MARKDOWN_V2, disable_notification=True)
 
 nest_asyncio.apply()
 
@@ -112,6 +117,9 @@ async def startgame(update: Update, context: ContextTypes.DEFAULT_TYPE):
     used_words.setdefault(chat_id, [])
     scoreboard.setdefault(chat_id, {})
     game_master_id[chat_id] = user.id
+
+    # Aparıcıya bildiriş göndəririk
+    await send_mention_notification(chat_id, user.id, "🔔 Yeni aparıcı: {0}!", context)
 
     while True:
         nxt = random.choice(words)
