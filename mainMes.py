@@ -12,7 +12,6 @@ from telegram.ext import (
 
 nest_asyncio.apply()
 
-TOKEN = os.getenv("7939469386:AAGxKRtMBcfDElCi6gunPBZqR3QqX6PQooE")
 AUTHORIZED_USER_IDS = [5257767076, 7924310880]
 SCORE_FILE = "scores.json"
 PLAYER_FILE = "players.json"
