@@ -205,15 +205,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         print(f"Xəta: {e}")
 
-    try:
-        except telegram.error.BadRequest as e:
-            if "Message is not modified" not in str(e):
-                raise
-            else:
-                await query.edit_message_reply_markup(reply_markup=get_keyboard())
-    except Exception as e:
-        print(f"Xəta: {e}")
-
     if query.data == "change":
         waiting_for_new_master[chat_id] = True
         current_word[chat_id] = None
