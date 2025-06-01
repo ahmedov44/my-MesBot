@@ -1,6 +1,7 @@
 import json
 import os
 import random
+import time
 import nest_asyncio
 import asyncio
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
@@ -159,7 +160,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         waiting_for_new_master[chat_id] = True
         current_word[chat_id] = None
         game_master_id[chat_id] = None
-        await query.edit_message_text("Aparıcı Dəyişdi. Yeni aparıcı axtarılır...")
+        await query.edit_message_text("Aparıcı Dəfoldu. Yeni aparıcı axtarılır...")
 
         await context.bot.send_message(
             chat_id=chat_id,
@@ -192,6 +193,9 @@ async def handle_become_master(update: Update, context: ContextTypes.DEFAULT_TYP
     )
 
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.message is None or update.message.text is None:
+        return  # Heç bir mətn mesajı gəlməyib
+
     chat_id = str(update.effective_chat.id)
     user = update.effective_user
     text = az_lower(update.message.text.strip())
@@ -229,7 +233,7 @@ async def show_scoreboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
     sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
 
     seen_users = set()
-    text = "\ud83c\udfc6 Reytinq:\n"
+    text = "🏆 Reytinq:\n"
     rank = 1
 
     for user_id, score in sorted_scores:
@@ -271,7 +275,6 @@ async def main():
     await app.run_polling()
 
 if __name__ == "__main__":
-    import asyncio
     try:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
