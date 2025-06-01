@@ -209,7 +209,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.answer("DƏFOL! APARICININ İŞİNƏ QARIŞMA.", show_alert=True)
         return
 
-    elif query.data == "skip":
+elif query.data == "skip":
     attempts = 0
     while attempts < 10:
         nxt = random.choice(words)
