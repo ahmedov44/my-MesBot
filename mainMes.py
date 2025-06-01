@@ -12,7 +12,7 @@ from telegram.ext import (
 
 nest_asyncio.apply()
 
-TOKEN = "7939469386:AAEHHy4DwLLph67JtbD_eIgMUwFKpz8dEX8"
+TOKEN = "BOT_TOKEN"
 AUTHORIZED_USER_ID = 5257767076
 SCORE_FILE = "scores.json"
 PLAYER_FILE = "players.json"
