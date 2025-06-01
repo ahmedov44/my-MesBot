@@ -232,7 +232,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await query.edit_message_reply_markup(reply_markup=get_keyboard())
 
-    elif query.data == "change":
+    if query.data == "change":
         waiting_for_new_master[chat_id] = True
         current_word[chat_id] = None
         game_master_id[chat_id] = None
