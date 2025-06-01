@@ -1,7 +1,6 @@
 import json
 import os
 import random
-import time
 import nest_asyncio
 import asyncio
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
@@ -17,8 +16,7 @@ AUTHORIZED_USER_IDS = [5257767076, 7924310880]
 SCORE_FILE = "scores.json"
 PLAYER_FILE = "players.json"
 
-# --- WORDS omitted for brevity in this snippet, assume it's the same ---
-words = [ "Rusca", "Ingiliscə" ]
+words = ["Rusca", "Ingiliscə"]
 
 game_active = {}
 game_master_id = {}
@@ -69,20 +67,17 @@ async def startgame(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = str(chat.id)
     user = update.effective_user
 
-    # Qrup yoxlaması
     if chat.type not in ["group", "supergroup"]:
         await update.message.reply_text("Bu əmri yalnız qrup daxilində istifadə edə bilərsiniz.")
         return
 
-    # Botun admin olub-olmadığını yoxla
     bot_member = await chat.get_member(context.bot.id)
     if bot_member.status != "administrator":
         await update.message.reply_text("❌ Botun bu qrupda admin səlahiyyəti yoxdur. Zəhmət olmasa bota mesaj silmə və mesaj sabitləmə yetkisi verin.")
         return
 
-    # İstifadəçinin admin olduğunu yoxla
     member = await chat.get_member(user.id)
-    if member.status not in ["administrator", "creator"] and user.id != AUTHORIZED_USER_ID:
+    if member.status not in ["administrator", "creator"] and user.id not in AUTHORIZED_USER_IDS:
         await update.message.reply_text("Bu əmri yalnız adminlər verə bilər.")
         return
 
@@ -113,15 +108,13 @@ async def stopgame(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = str(chat.id)
     user = update.effective_user
 
-    # Bot admin deyilsə
     bot_member = await chat.get_member(context.bot.id)
     if bot_member.status != "administrator":
         await update.message.reply_text("❌ Botun admin səlahiyyəti yoxdur. Bot admin olmadıqca bu əmri yerinə yetirə bilməz.")
         return
 
-    # İstifadəçi admin deyilsə
     member = await chat.get_member(user.id)
-    if member.status not in ["administrator", "creator"] and user.id != AUTHORIZED_USER_ID:
+    if member.status not in ["administrator", "creator"] and user.id not in AUTHORIZED_USER_IDS:
         await update.message.reply_text("Bu əmri yalnız adminlər verə bilər.")
         return
 
@@ -143,7 +136,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if query.data == "show":
-        if user_id != game_master_id.get(chat_id) and user_id != AUTHORIZED_USER_ID:
+        if user_id != game_master_id.get(chat_id) and user_id not in AUTHORIZED_USER_IDS:
             await query.answer("Bu sözü yalnız aparıcı görə bilər.", show_alert=True)
             return
         await query.answer(f"Söz: {current_word.get(chat_id)}", show_alert=True)
@@ -166,15 +159,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         waiting_for_new_master[chat_id] = True
         current_word[chat_id] = None
         game_master_id[chat_id] = None
-        await query.edit_message_text("Aparıcı Dəfoldu. Yeni aparıcı axtarılır...")
+        await query.edit_message_text("Aparıcı Dəyişdi. Yeni aparıcı axtarılır...")
 
-    # Yeni seçim üçün ayrıca aktiv mesaj göndərilir
-   await context.bot.send_message(
-       chat_id=chat_id,
-       text="Kim aparıcı olmaq istəyir? 🎤",
-       reply_markup=get_new_host_button()
-)
-    
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text="Kim aparıcı olmaq istəyir? 🎤",
+            reply_markup=get_new_host_button()
+        )
 
 async def handle_become_master(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -238,7 +229,7 @@ async def show_scoreboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
     sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
 
     seen_users = set()
-    text = "🏆 Reytinq:\n"
+    text = "\ud83c\udfc6 Reytinq:\n"
     rank = 1
 
     for user_id, score in sorted_scores:
@@ -279,7 +270,6 @@ async def main():
     print("Bot işə düşdü...")
     await app.run_polling()
 
-# Replit üçün:
 if __name__ == "__main__":
     import asyncio
     try:
@@ -288,4 +278,3 @@ if __name__ == "__main__":
         loop.run_until_complete(main())
     except KeyboardInterrupt:
         print("Bot dayandırıldı.")
-
