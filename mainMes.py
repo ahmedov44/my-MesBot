@@ -169,10 +169,11 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("Aparıcı Dəfoldu. Yeni aparıcı axtarılır...")
 
     # Yeni seçim üçün ayrıca aktiv mesaj göndərilir
-    await context.bot.send_message(
-        chat_id=chat_id,
-        text="Kim aparıcı olmaq istəyir? 🎤",
-        reply_markup=get_new_host_button()
+   await context.bot.send_message(
+       chat_id=chat_id,
+       text="Kim aparıcı olmaq istəyir? 🎤",
+       reply_markup=get_new_host_button()
+)
     
 
 async def handle_become_master(update: Update, context: ContextTypes.DEFAULT_TYPE):
