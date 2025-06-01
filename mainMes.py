@@ -163,11 +163,17 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("Yeni söz gəldi!", reply_markup=get_keyboard())
 
     elif query.data == "change":
-        waiting_for_new_master[chat_id] = True
-        current_word[chat_id] = None
-        game_master_id[chat_id] = None
-        await query.edit_message_text("Aparıcı imtina etdi. Yeni aparıcı axtarılır...")
-        await context.bot.send_message(chat_id, "Kim aparıcı olmaq istəyir?", reply_markup=get_new_host_button())
+    waiting_for_new_master[chat_id] = True
+    current_word[chat_id] = None
+    game_master_id[chat_id] = None
+    await query.edit_message_text("Aparıcı Dəfoldu. Yeni aparıcı axtarılır...")
+
+    # Yeni seçim üçün ayrıca aktiv mesaj göndərilir
+    await context.bot.send_message(
+        chat_id=chat_id,
+        text="Kim aparıcı olmaq istəyir? 🎤",
+        reply_markup=get_new_host_button()
+    
 
 async def handle_become_master(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
