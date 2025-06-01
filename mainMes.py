@@ -1,4 +1,3 @@
-
 import json
 import os
 import random
@@ -23,135 +22,132 @@ SCORE_FILE = "scores.json"
 PLAYER_FILE = "players.json"
 
 words = ["Alma", "Armud", "Ərik", "Nar", "Mars", "Futbol", "Şahmat"]
+
 user_stats = {}
-user_words = {}
-user_thoughts = {}
+active_games = {}
+current_word = {}
+used_words = {}
 
-def load_data():
-    global user_stats, user_words
-    try:
-        with open(SCORE_FILE, "r") as f:
-            user_stats = json.load(f)
-    except:
-        user_stats = {}
-    try:
-        with open(PLAYER_FILE, "r") as f:
-            user_words = json.load(f)
-    except:
-        user_words = {}
+def load_json(filename):
+    if os.path.exists(filename):
+        with open(filename, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
 
-def save_data():
-    with open(SCORE_FILE, "w") as f:
-        json.dump(user_stats, f)
-    with open(PLAYER_FILE, "w") as f:
-        json.dump(user_words, f)
+def save_json(data, filename):
+    with open(filename, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+user_stats = load_json(SCORE_FILE)
+used_words = load_json(PLAYER_FILE)
+
+def get_new_word(chat_id):
+    available_words = list(set(words) - set(used_words.get(str(chat_id), [])))
+    if not available_words:
+        used_words[str(chat_id)] = []
+        available_words = words.copy()
+    word = random.choice(available_words)
+    used_words.setdefault(str(chat_id), []).append(word)
+    save_json(used_words, PLAYER_FILE)
+    return word
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id not in AUTHORIZED_USER_IDS:
-        await update.message.reply_text("❌ Bu əmri yalnız adminlər işlədə bilər.")
+    if update.effective_chat.type != "group":
+        await update.message.reply_text("Bu əmri yalnız qrup daxilində istifadə edin.")
         return
-
-    user_id = str(update.effective_user.id)
-    word = random.choice(words)
-    context.user_data["current_word"] = word
-    context.user_data["awaiting_thought"] = False
-    user_words[user_id] = word
-    user_stats.setdefault(user_id, 0)
-
-    keyboard = [
-        [
-            InlineKeyboardButton("📌 Sözü göstər", callback_data="show_word"),
-            InlineKeyboardButton("🔁 Növbəti söz", callback_data="next"),
-        ],
-        [InlineKeyboardButton("📝 Fikrimi dəyişdim", callback_data="change_thought")],
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-
-    await update.message.reply_text(
-        f"🟢 OYUN AKTİVDİR.
-🔤 Söz: {word}", reply_markup=reply_markup
-    )
-    save_data()
+    chat_id = update.effective_chat.id
+    current_word[chat_id] = get_new_word(chat_id)
+    active_games[chat_id] = True
+    await update.message.reply_text("🔁 OYUN AKTİVDİR.")
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id not in AUTHORIZED_USER_IDS:
-        await update.message.reply_text("❌ Bu əmri yalnız adminlər işlədə bilər.")
-        return
-    await update.message.reply_text("🔴 Oyun dayandırıldı.")
-    save_data()
-
-async def rating(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
-    ratings = sorted(user_stats.items(), key=lambda x: x[1], reverse=True)
-    message = "🏆 Reytinq:
-"
-    for user_id, score in ratings:
-        user = await context.bot.get_chat(user_id)
-        name = user.first_name
-        message += f"{name}: {score} xal
-"
-    if message == "🏆 Reytinq:
-":
-        message = "ℹ️ Hələ heç kim xal qazanmamayıb."
-    await update.message.reply_text(message)
+    if chat_id in active_games:
+        del active_games[chat_id]
+        await update.message.reply_text("🛑 Oyun dayandırıldı.")
+    else:
+        await update.message.reply_text("Aktiv oyun yoxdur.")
 
-async def global_rating(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        with open(SCORE_FILE, "r") as f:
-            all_scores = json.load(f)
-    except FileNotFoundError:
-        all_scores = {}
+async def show_score(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+    chat_scores = user_stats.get(str(chat_id), {})
+    if not chat_scores:
+        await update.message.reply_text("❌ Hələ heç kim xal qazanmamayıb.")
+        return
+
+    sorted_scores = sorted(chat_scores.items(), key=lambda x: x[1], reverse=True)
+    text = "📊 Qrup üzrə reytinq:\n\n"
+    for i, (user, score) in enumerate(sorted_scores, 1):
+        text += f"{i}. {user}: {score} xal\n"
+    await update.message.reply_text(text)
+
+async def global_score(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    all_scores = {}
+    for group_scores in user_stats.values():
+        for user, score in group_scores.items():
+            all_scores[user] = all_scores.get(user, 0) + score
+
     if not all_scores:
-        await update.message.reply_text("ℹ️ Ümumi xal məlumatı yoxdur.")
+        await update.message.reply_text("❌ Ümumi xal məlumatı yoxdur.")
         return
 
     sorted_scores = sorted(all_scores.items(), key=lambda x: x[1], reverse=True)
-    message = "🌍 Ümumi Reytinq:
-"
-    for user_id, score in sorted_scores:
-        user = await context.bot.get_chat(user_id)
-        name = user.first_name
-        message += f"{name}: {score} xal
-"
-    await update.message.reply_text(message)
+    text = "🌐 Ümumi reytinq:\n\n"
+    for i, (user, score) in enumerate(sorted_scores, 1):
+        text += f"{i}. {user}: {score} xal\n"
+    await update.message.reply_text(text)
 
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = str(update.effective_user.id)
-    if context.user_data.get("awaiting_thought"):
-        context.user_data["awaiting_thought"] = False
-        user_stats[user_id] += 1
-        user_thoughts[user_id] = update.message.text
-        await update.message.reply_text("✅ Fikrin qəbul edildi. 1 xal qazandınız.")
-        save_data()
-    else:
-        await update.message.reply_text("ℹ️ Zəhmət olmasa uyğun əmrdən istifadə edin.")
+    message = update.message
+    chat_id = message.chat_id
+    user_name = message.from_user.first_name
+    text = message.text.strip()
+
+    if chat_id in active_games:
+        correct = current_word.get(chat_id)
+        if not correct:
+            return
+
+        if text.lower() == correct.lower():
+            user_stats.setdefault(str(chat_id), {})
+            user_stats[str(chat_id)][user_name] = user_stats[str(chat_id)].get(user_name, 0) + 1
+            save_json(user_stats, SCORE_FILE)
+
+            keyboard = [
+                [
+                    InlineKeyboardButton("➡ Növbəti söz", callback_data="next_word"),
+                    InlineKeyboardButton("❌ Fikrimi dəyişdim", callback_data="cancel_game")
+                ]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await message.reply_text("✅ Düzgün tapdınız!", reply_markup=reply_markup)
+        else:
+            await message.reply_text("❌ Yanlışdır!")
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
+    chat_id = query.message.chat_id
     await query.answer()
-    user_id = str(query.from_user.id)
 
-    if query.data == "next":
-        word = random.choice(words)
-        context.user_data["current_word"] = word
-        user_words[user_id] = word
-        await query.edit_message_text(f"🔤 Yeni söz: {word}")
-    elif query.data == "change_thought":
-        context.user_data["awaiting_thought"] = True
-        await query.edit_message_text("📝 Zəhmət olmasa yeni fikrinizi göndərin.")
-    elif query.data == "show_word":
-        word = context.user_data.get("current_word", "Tapılmadı.")
-        await query.edit_message_text(f"📌 Cari söz: {word}")
+    if query.data == "next_word":
+        current_word[chat_id] = get_new_word(chat_id)
+        await query.message.reply_text("Yeni söz təyin edildi. Davam edin!")
+    elif query.data == "cancel_game":
+        active_games.pop(chat_id, None)
+        current_word.pop(chat_id, None)
+        await query.message.reply_text("Oyun ləğv edildi.")
 
 def main():
-    load_data()
     app = Application.builder().token(TOKEN).build()
+
     app.add_handler(CommandHandler("basla", start))
     app.add_handler(CommandHandler("dayan", stop))
-    app.add_handler(CommandHandler("reyting", rating))
-    app.add_handler(CommandHandler("globalreyting", global_rating))
+    app.add_handler(CommandHandler("reyting", show_score))
+    app.add_handler(CommandHandler("globalreyting", global_score))
     app.add_handler(CallbackQueryHandler(button_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
+
+    print("Bot işə düşdü...")
     app.run_polling()
 
 if __name__ == "__main__":
