@@ -13,7 +13,7 @@ from telegram.ext import (
 nest_asyncio.apply()
 
 TOKEN = os.getenv("BOT_TOKEN")
-AUTHORIZED_USER_ID = 5257767076
+AUTHORIZED_USER_IDS = [5257767076, 7924310880]
 SCORE_FILE = "scores.json"
 PLAYER_FILE = "players.json"
 
@@ -99,7 +99,7 @@ async def startgame(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     member = await chat.get_member(user.id)
-    if member.status not in ["administrator", "creator"] and user.id != AUTHORIZED_USER_ID:
+    if member.status not in ["administrator", "creator"] and user.id not in AUTHORIZED_USER_IDS:
         await update.message.reply_text("DƏFOL! ADMİNİN İŞİNƏ QARIŞMA.")
         return
 
@@ -165,7 +165,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     update_activity(chat_id)
 
     if query.data == "show":
-        if user_id != game_master_id.get(chat_id) and user_id != AUTHORIZED_USER_ID:
+        if user_id != game_master_id.get(chat_id) and user_id not in AUTHORIZED_USER_IDS:
             await query.answer("DƏFOL! APARICININ İŞİNƏ QARIŞMA.", show_alert=True)
             return
         await query.answer(f"Söz: {current_word.get(chat_id)}", show_alert=True)
