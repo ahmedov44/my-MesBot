@@ -209,15 +209,15 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.answer("DƏFOL! APARICININ İŞİNƏ QARIŞMA.", show_alert=True)
         return
 
-elif query.data == "skip":
-    attempts = 0
-    while attempts < 10:
-        nxt = random.choice(words)
-        if nxt not in used_words[chat_id]:
-            current_word[chat_id] = nxt
-            used_words[chat_id].append(nxt)
-            break
-        attempts += 1
+    elif query.data == "skip":
+        attempts = 0
+        while attempts < 10:
+            nxt = random.choice(words)
+            if nxt not in used_words[chat_id]:
+                current_word[chat_id] = nxt
+                used_words[chat_id].append(nxt)
+                break
+            attempts += 1
     else:
         used_words[chat_id] = []
         current_word[chat_id] = random.choice(words)
