@@ -7,12 +7,7 @@ import nest_asyncio
 import asyncio
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
-    Application,
-    CommandHandler,
-    CallbackQueryHandler,  # <-- Bunu əlavə et
-    MessageHandler,
-    ContextTypes,
-    filters
+    Application, CommandHandler, ContextTypes
 )
 
 nest_asyncio.apply()
@@ -188,7 +183,7 @@ async def main():
     app.add_handler(CommandHandler("globalreyting", show_global_top))
 
     print("Bot işə düşdü...")
-    await app.add_handler(CallbackQueryHandler(button_handler))
+    app.add_handler(CallbackQueryHandler(button_handler))
     app.run_polling()
 
 if __name__ == "__main__":
