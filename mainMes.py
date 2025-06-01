@@ -17,7 +17,7 @@ AUTHORIZED_USER_IDS = [5257767076, 7924310880]
 SCORE_FILE = "scores.json"
 PLAYER_FILE = "players.json"
 
-# words = ["Rusca", "Ingiliscə", "Ruscsads", "Ingisdasdliscə", "Ruasdasdsca", "Ingasdiliscə", "Rus5344ca", "Ingil45645iscə", "Ru456sca", "Ingil456iscə", "Rus456ca", "Ing456456iliscə"]
+words = ["Rusca", "Ingiliscə", "Ruscsads", "Ingisdasdliscə", "Ruasdasdsca", "Ingasdiliscə", "Rus5344ca", "Ingil45645iscə", "Ru456sca", "Ingil456iscə", "Rus456ca", "Ing456456iliscə"]
 
 game_active = {}
 game_master_id = {}
