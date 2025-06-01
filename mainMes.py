@@ -183,10 +183,44 @@ async def main():
     app.add_handler(CommandHandler("globalreyting", show_global_top))
 
     print("Bot işə düşdü...")
-    await app.run_polling()
+    await app.add_handler(CallbackQueryHandler(button_handler))
+    app.run_polling()
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
         print("Bot dayandırıldı.")
+
+
+async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    chat_id = str(query.message.chat.id)
+
+    if not game_active.get(chat_id, False):
+        await query.message.reply_text("❌ Oyun aktiv deyil.")
+        return
+
+    if query.data == "show":
+        word = current_word.get(chat_id, "Söz tapılmadı.")
+        await query.message.reply_text(f"🔍 Söz: {word}")
+
+    elif query.data == "skip":
+        all_words = set(words)
+        used = set(used_words.get(chat_id, []))
+        remaining = list(all_words - used)
+
+        if not remaining:
+            used_words[chat_id] = []
+            remaining = words[:]
+
+        new_word = random.choice(remaining)
+        current_word[chat_id] = new_word
+        used_words.setdefault(chat_id, []).append(new_word)
+        await query.message.reply_text("♻️ Yeni söz təyin edildi.")
+
+    elif query.data == "change":
+        game_master_id[chat_id] = None
+        waiting_for_new_master[chat_id] = True
+        await query.message.reply_text("❌ Aparıcı dəyişdi. Yeni aparıcı gözlənilir...")
