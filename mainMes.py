@@ -138,7 +138,7 @@ async def stopgame(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     member = await chat.get_member(user.id)
-    if member.status not in ["administrator", "creator"] and user.id != AUTHORIZED_USER_ID:
+    if member.status not in ["administrator", "creator"] and user.id not in AUTHORIZED_USER_IDS:
         await update.message.reply_text("DƏFOL! ADMİNİN İŞİNƏ QARIŞMA.")
         return
 
