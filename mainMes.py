@@ -191,25 +191,16 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await query.answer(f"Yeni söz: {current_word[chat_id]}", show_alert=True)
 
-        new_text = "Yeni söz gəldi!"
-        new_markup = get_keyboard()
-        current_text = query.message.text
-        current_markup = query.message.reply_markup
-
-        import json
-        def markup_to_str(markup):
-            return json.dumps(markup.to_dict(), sort_keys=True) if markup else ""
-
-        try:
-            if current_text != new_text:
-                await query.edit_message_text(new_text, reply_markup=new_markup)
-            elif markup_to_str(current_markup) != markup_to_str(new_markup):
-                await query.edit_message_reply_markup(reply_markup=new_markup)
-        except BadRequest as e:
-            if "Message is not modified" in str(e):
-                pass
-            else:
-                raise
+        if something:
+    await query.edit_message_text("Yeni söz gəldi!", reply_markup=get_keyboard())
+else:
+    try:
+        await query.edit_message_reply_markup(reply_markup=get_keyboard())
+    except telegram.error.BadRequest as e:
+        if "Message is not modified" not in str(e):
+            raise
+        else:
+            await query.edit_message_reply_markup(reply_markup=get_keyboard())
 
     elif query.data == "change":
         waiting_for_new_master[chat_id] = True
