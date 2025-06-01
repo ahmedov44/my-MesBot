@@ -163,10 +163,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("Yeni söz gəldi!", reply_markup=get_keyboard())
 
     elif query.data == "change":
-    waiting_for_new_master[chat_id] = True
-    current_word[chat_id] = None
-    game_master_id[chat_id] = None
-    await query.edit_message_text("Aparıcı Dəfoldu. Yeni aparıcı axtarılır...")
+        waiting_for_new_master[chat_id] = True
+        current_word[chat_id] = None
+        game_master_id[chat_id] = None
+        await query.edit_message_text("Aparıcı Dəfoldu. Yeni aparıcı axtarılır...")
 
     # Yeni seçim üçün ayrıca aktiv mesaj göndərilir
     await context.bot.send_message(
