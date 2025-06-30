@@ -2314,7 +2314,6 @@ async def inactivity_watcher(app):
 
 async def main():
     # Replit'də daim işlək qalması üçün keep-alive serveri başlat
-    keep_alive()
     print("Keep-alive serveri başladı...")
 
     init_db()
