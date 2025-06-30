@@ -2385,7 +2385,6 @@ async def main():
 
 if __name__ == "__main__":
     nest_asyncio.apply()
-    keep_alive()
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
